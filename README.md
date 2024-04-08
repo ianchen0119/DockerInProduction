@@ -96,3 +96,14 @@ Debian 和 Ubuntu 使用 ufw 作為防火墻的前端，然而，ufw 與 docker 
 - Ingress：經由 NAT 表（table）後通往 container 的網路封包會被發往 `FORWARD` 鏈，剛好巧妙的繞過 `INPUT` 鏈上的規則。
 - Egress：參考上圖，經過 briging decision 且送往 `FORWARD` 鏈的封包不會送往 `OUTPUT` 鏈。
 - 補充：Ric Hincapie 的[技術文章](https://richincapie.medium.com/docker-ufw-and-iptables-a-security-flaw-you-need-to-solve-now-40c85587b563) 使用圖解且搭配案例分析很好地解釋了這個問題。
+
+### Dataplane
+
+正常情況下，Container 具有獨立的 network namespace（Host Network Mode 除外），這也代表：
+- 與 Host 的 Network Stack 是互相隔離的。
+- Network device 是獨立的。
+  - 就算在 container 中新增 tun/tap、veth、vlan 等 device，在 host 上也不可見。
+
+但是涉及 kernel plugin 的部分，即使我們從 container 下手，對 host 仍是可見的：
+- Container 中載入的 eBPF program（且 container 必須為 privileged mode 才有權限做這件事）。
+- Kernel module。  
